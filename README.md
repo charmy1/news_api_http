@@ -1,6 +1,6 @@
-# new_api_http_flutter
+# news_api_http_flutter
 
-A new Flutter project.
+A new Flutter project using https://newsapi.org/. 
 
 ## Getting Started
 
