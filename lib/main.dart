@@ -6,7 +6,8 @@ import 'router/router.gr.dart' as r;
 import 'injection.dart';
 
 //fvm flutter packages pub run build_runner watch --delete-conflicting-outputs
-
+//todo search,detail page ,
+// sort by recent first is default
 
 void main() async{
 

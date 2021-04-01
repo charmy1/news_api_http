@@ -2,14 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_api_http_flutter/application/news_bloc/news_bloc.dart';
 
-class SearchWidget extends StatelessWidget {
+class SearchWidget extends StatefulWidget {
   const SearchWidget({
     Key key,
   }) : super(key: key);
 
   @override
+  _SearchWidgetState createState() => _SearchWidgetState();
+}
+
+class _SearchWidgetState extends State<SearchWidget> {
+  TextEditingController controller = TextEditingController();
+
+  @override
   Widget build(BuildContext context) {
-    TextEditingController controller = TextEditingController();
     return Padding(
       padding: const EdgeInsets.only(left: 10, top: 5, right: 10, bottom: 5),
       child: TextFormField(
@@ -28,7 +34,7 @@ class SearchWidget extends StatelessWidget {
               .read<NewsBloc>()
               .add(const NewsEvent.searchQueryChangedEvent());
         },
-        decoration: const InputDecoration(
+        decoration:  InputDecoration(
           border: const OutlineInputBorder(
             borderRadius: BorderRadius.all(Radius.circular(5.0)),
             borderSide: BorderSide(
@@ -38,15 +44,24 @@ class SearchWidget extends StatelessWidget {
             ),
           ),
           filled: true,
-          prefixIcon: const Icon(
+          prefixIcon:  Icon(
             Icons.search,
             color: Colors.black,
           ),
+          suffixIcon: IconButton(icon: Icon(
+            Icons.close,
+            color: Colors.black,
+          ), onPressed: (){
+            controller.clear();
+            context
+                .read<NewsBloc>().add(NewsEvent.readNewsEvent());
+          }),
           fillColor: const Color(0xFFFAFAFA),
           hintStyle: const TextStyle(color: Colors.black, fontSize: 18),
           hintText: "Search",
 
         ),
+
       ),
     );
   }
