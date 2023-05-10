@@ -4,8 +4,8 @@ import 'package:new_api_http_flutter/application/news_bloc/news_bloc.dart';
 
 class SearchWidget extends StatefulWidget {
   const SearchWidget({
-    Key key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   _SearchWidgetState createState() => _SearchWidgetState();
@@ -44,18 +44,18 @@ class _SearchWidgetState extends State<SearchWidget> {
             ),
           ),
           filled: true,
-          prefixIcon:  Icon(
+          prefixIcon:  const Icon(
             Icons.search,
             color: Colors.black,
           ),
-          suffixIcon: IconButton(icon: Icon(
+          suffixIcon: IconButton(icon: const Icon(
             Icons.close,
             color: Colors.black,
           ), onPressed: (){
             controller.clear();
             context
-                .read<NewsBloc>().add(NewsEvent.readNewsEvent());
-          }),
+                .read<NewsBloc>().add(const NewsEvent.readNewsEvent());
+          },),
           fillColor: const Color(0xFFFAFAFA),
           hintStyle: const TextStyle(color: Colors.black, fontSize: 18),
           hintText: "Search",

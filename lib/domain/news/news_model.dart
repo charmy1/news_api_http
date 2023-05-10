@@ -6,12 +6,12 @@ part 'news_model.freezed.dart';
 part 'news_model.g.dart';
 
 @freezed
-abstract class NewsModel with _$NewsModel {
+ class NewsModel with _$NewsModel {
   @JsonSerializable(explicitToJson: true)
   const factory NewsModel({
-    String status,
-    int totalResults,
-    List<ArticleModel> articles,
+    required String status,
+    required int totalResults,
+    required List<ArticleModel> articles,
   }) = _NewsModel;
 
   factory NewsModel.fromJson(Map<String, dynamic> json) =>

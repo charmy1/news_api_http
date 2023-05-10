@@ -8,7 +8,7 @@ import 'package:new_api_http_flutter/core/failure.dart';
 import 'package:new_api_http_flutter/domain/news/news_interface.dart';
 import 'package:new_api_http_flutter/domain/news/news_model.dart';
 import 'package:rxdart/rxdart.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
 part 'news_bloc.freezed.dart';
 
 part 'news_event.dart';
@@ -19,70 +19,61 @@ part 'news_state.dart';
 class NewsBloc extends Bloc<NewsEvent, NewsState> {
   final NewsInterface _newsInterface;
 
-  NewsBloc(this._newsInterface) : super(NewsState.initial());
+  NewsBloc(this._newsInterface) : super(NewsState.initial()) {
+    on<ReadNewsEvent>((event, emit) async {
+      emit(state.copyWith(isSubmitting: true, isListing: true, isSearch: false, isFilter: false));
+      final result = await _newsInterface.getAllNewsData(page: state.page);
+      emit(state.copyWith(isSubmitting: false, newsListFailureOrSuccessOption: optionOf(result)));
+    });
 
-  @override
-  Stream<Transition<NewsEvent, NewsState>> transformEvents(
-    Stream<NewsEvent> events,
-    TransitionFunction<NewsEvent, NewsState> transitionFn,
-  ) {
-    final nonDebounceStream =
-        events.where((event) => event is! SearchQueryChangedEvent);
-    final debounceStream = events
-        .where((event) => event is SearchQueryChangedEvent)
-        .debounceTime(
-            const Duration(milliseconds: 300)); // change debounce time
+    on<PageCountEvent>((event, emit) {
+      final pageCount = state.page;
+      emit(state.copyWith(page: pageCount + 1));
+    });
 
-    return super.transformEvents(
-        MergeStream([nonDebounceStream, debounceStream]), transitionFn);
+    on<PageCountEventReset>((event, emit) {
+      emit(state.copyWith(page: 1));
+    });
+
+    on<FilterNewsBySourcesEvent>((event, emit) async {
+      emit(state.copyWith(isSubmitting: true, isFilter: true, isSearch: false, isListing: false));
+      final result =
+      await _newsInterface.sourcesFilterNewsData(page: state.page, source: state.source);
+      emit(state.copyWith(isSubmitting: false, newsListFailureOrSuccessOption: optionOf(result)));
+    });
+
+    on<SearchQueryChangedEvent>((event, emit) async {
+      emit(state.copyWith(isSubmitting: true, isSearch: true, isFilter: false, isListing: false));
+      final result =
+      await _newsInterface.searchNewsData(page: state.page, query: state.searchText);
+      emit(state.copyWith(isSubmitting: false, newsListFailureOrSuccessOption: optionOf(result)));
+    });
+
+    on<SourceChangedEvent>((event, emit) {
+      emit(state.copyWith(isSubmitting: true, source: event.source));
+    });
+
+    on<TextChangedEvent>((event, emit) {
+      emit(state.copyWith(isSubmitting: true, searchText: event.searchQuery));
+    });
+
+    on<ReachedEndOfList>((event, emit) {});
   }
 
-  @override
-  Stream<NewsState> mapEventToState(
-    NewsEvent event,
-  ) async* {
-    yield* event.map(
-        readNewsEvent: (e) async* {
-          yield state.copyWith(isSubmitting: true,isListing:true,isSearch:false,isFilter:false);
-          final result =
-              await _newsInterface.getAllNewsData(page: state.page); //todo
-          yield state.copyWith(
-              isSubmitting: false,
-              newsListFailureOrSuccessOption: optionOf(result));
-        },
-        pageCountEvent: (e) async* {
-          int pageCount = state.page;
-          print("Page count event ");
-          print(state.page);
-          print(pageCount++);
-          yield state.copyWith(page: pageCount++);
-        },
-        pageCountEventReset: (e) async* {
-          yield state.copyWith(page: 1);
-        },
-        filterNewsBySourcesEvent: (e) async* {
-          yield state.copyWith(isSubmitting: true,isFilter:true,isSearch:false,isListing:false);
-          final result = await _newsInterface.sourcesFilterNewsData(
-              page: state.page, source: state.source); //todo
-          yield state.copyWith(
-              isSubmitting: false,
-              newsListFailureOrSuccessOption: optionOf(result));
-        },
-        searchQueryChangedEvent: (e) async* {
-          yield state.copyWith(isSubmitting: true,isSearch:true,isFilter:false,isListing:false);
-          final result = await _newsInterface.searchNewsData(
-              page: state.page, query: state.searchText); //todo
-          yield state.copyWith(
-              isSubmitting: false,
-              newsListFailureOrSuccessOption: optionOf(result));
-        },
-        sourceChangedEvent: (e) async* {
-          yield state.copyWith(isSubmitting: true, source: e.source);
-        },
-        textChangedEvent: (e) async* {
-          yield state.copyWith(isSubmitting: true, searchText: e.searchQuery);
-        },
-        reachedEndOfList: (e) async* {});
+  Stream<Transition<NewsEvent, NewsState>> transformTransitions(
+      Stream<Transition<NewsEvent, NewsState>> transitions,
+      ) {
+    final nonDebounceStream = transitions.where(
+          (transition) => transition.event is! SearchQueryChangedEvent,
+    );
+    final debounceStream = transitions.where(
+          (transition) => transition.event is SearchQueryChangedEvent,
+    ).debounceTime(const Duration(milliseconds: 300));
+
+    return MergeStream([
+      nonDebounceStream,
+      debounceStream,
+    ]).asyncExpand((transition) => Stream.value(transition));
   }
 
   @override

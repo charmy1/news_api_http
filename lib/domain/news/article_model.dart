@@ -5,17 +5,17 @@ part 'article_model.freezed.dart';
 part 'article_model.g.dart';
 
 @freezed
-abstract class ArticleModel with _$ArticleModel {
+ class ArticleModel with _$ArticleModel {
   @JsonSerializable(explicitToJson: true)
   const factory ArticleModel({
-    SourceModel source,
-    String author,
-    String title,
-    String description,
-    String url,
-    String urlToImage,
-    String publishedAt,
-    String content,
+    required SourceModel? source,
+    required String? author,
+    required String? title,
+    required String? description,
+    required String? url,
+    required String? urlToImage,
+    required String? publishedAt,
+    required String? content,
 
   }) = _ArticleModel;
 
