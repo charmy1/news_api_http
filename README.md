@@ -17,6 +17,6 @@ If using fvm use below command <br />
 fvm flutter packages pub run build_runner build --delete-conflicting-outputs
 ```
 
-![](tabs.gif)
+![](news-api-paginate.gif)
 
 
