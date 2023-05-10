@@ -36,8 +36,6 @@ class HomePageScaffold extends StatefulWidget {
 }
 
 class _HomePageScaffoldState extends State<HomePageScaffold> {
-  NewsModel? newsModel;
-
   @override
   void initState() {
     super.initState();
@@ -46,51 +44,33 @@ class _HomePageScaffoldState extends State<HomePageScaffold> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        elevation: 0,
-        title: const Text("News Api"),
-        actions: const <Widget>[
-          //here add menu for filter
-        ],
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
-      ),
-      body: BlocConsumer<NewsBloc, NewsState>(
-        listener: (context, state) {
-          state.newsListFailureOrSuccessOption?.fold(() {}, (right) {
-            right.fold((l) {}, (r) {
-              newsModel = r;
-            });
-          });
-        },
-        listenWhen: (previous, current) =>
-            previous.newsListFailureOrSuccessOption !=
-            current.newsListFailureOrSuccessOption,
-        buildWhen: (previous, current) =>
-            previous.newsListFailureOrSuccessOption !=
-            current.newsListFailureOrSuccessOption,
-        builder: (context, state) {
-          return Column(
-            children: <Widget>[
-              const SearchWidget(),
-              const TopSelection(
-                list: [
-                  "general",
-                  "entertainment",
-                  "health",
-                  "science",
-                  "sports",
-                  "technology",
-                  "business"
-                ],
-              ),
-              Expanded(child: NewsItems()),
-              // TestWidget()
-            ],
-          );
-        },
-      ),
-    );
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          elevation: 0,
+          title: const Text("News Api"),
+          actions: const <Widget>[
+            //here add menu for filter
+          ],
+          systemOverlayStyle: SystemUiOverlayStyle.dark,
+        ),
+        body: Column(
+          children: <Widget>[
+            const SearchWidget(),
+            const TopSelection(
+              list: [
+                "general",
+                "entertainment",
+                "health",
+                "science",
+                "sports",
+                "technology",
+                "business"
+              ],
+            ),
+            Expanded(child: NewsItems()),
+            // TestWidget()
+          ],
+        ));
   }
 }
 
@@ -194,21 +174,32 @@ class _NewsItemsState extends State<NewsItems> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<NewsBloc, NewsState>(
+
       listenWhen: (previous, current) =>
           previous.newsListFailureOrSuccessOption !=
           current.newsListFailureOrSuccessOption,
       buildWhen: (previous, current) =>
-          previous.newsListFailureOrSuccessOption !=
-          current.newsListFailureOrSuccessOption,
+      (previous.newsListFailureOrSuccessOption !=
+          current.newsListFailureOrSuccessOption)||(previous.isSubmitting!=current.isSubmitting),
       listener: (context, state) {
         state.newsListFailureOrSuccessOption?.fold(() {}, (right) {
           right.fold((l) {}, (r) {
-            list = r.articles;
+            if (list.isEmpty) {
+              list = r.articles;
+            } else {
+              if (r.articles.isNotEmpty) {
+                if (state.page == 0) {
+                  list = r.articles;
+                } else {
+                  list = [...list, ...r.articles];
+                }
+              }
+            }
           });
         });
       },
       builder: (context, state) {
-        if (state.isSubmitting) {
+        if (state.isSubmitting &&list.isEmpty) {
           return const Center(
             child: CircularProgressIndicator(),
           );
@@ -216,13 +207,23 @@ class _NewsItemsState extends State<NewsItems> {
           return (list.isNotEmpty)
               ? NotificationListener<ScrollNotification>(
                   onNotification: _handleNotification,
-                  child: ListView.builder(
-                    controller: scrollController,
-                    primary: false,
-                    itemCount: list.length,
-                    itemBuilder: (context, index) => NewsItemTile(
-                      articleModel: list[index],
-                    ),
+                  child: Stack(
+                    children: [
+                      ListView.builder(
+                        controller: scrollController,
+                        primary: false,
+                        itemCount: list.length,
+                        itemBuilder: (context, index) => NewsItemTile(
+                          articleModel: list[index],
+                        ),
+                      ),
+                      (state.isSubmitting)?Align(
+                       alignment: Alignment.bottomCenter,
+                        child: Container(color:Colors.white,height:100,child: const Center(
+                          child: const CircularProgressIndicator(color: Colors.black),
+                        )),
+                      ): const SizedBox(height: 0,),
+                    ],
                   ),
                 )
               : const Center(
@@ -287,21 +288,29 @@ class NewsItemTile extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Center(
                   child: Image.network(
-                    articleModel.urlToImage??"",
+                    articleModel.urlToImage ??
+                        "https://picsum.photos/250?image=9",
                     width: 200,
                     height: 145,
                     fit: BoxFit.cover,
-                    loadingBuilder: (BuildContext context, Widget child,
-                        ImageChunkEvent? loadingProgress,) {
+                    loadingBuilder: (
+                      BuildContext context,
+                      Widget child,
+                      ImageChunkEvent? loadingProgress,
+                    ) {
                       if (loadingProgress == null) return child;
                       return Center(
                         child: Image.network(
-                          articleModel.urlToImage??"",
+                          articleModel.urlToImage ??
+                              "https://picsum.photos/250?image=9",
                           width: 200,
                           height: 145,
                           fit: BoxFit.cover,
-                          loadingBuilder: (BuildContext context, Widget child,
-                              ImageChunkEvent? loadingProgress,) {
+                          loadingBuilder: (
+                            BuildContext context,
+                            Widget child,
+                            ImageChunkEvent? loadingProgress,
+                          ) {
                             if (loadingProgress == null) return child;
                             return Center(
                               child: CircularProgressIndicator(
@@ -331,7 +340,7 @@ class NewsItemTile extends StatelessWidget {
                     children: <Widget>[
                       Flexible(
                         child: Text(
-                          articleModel.title??"",
+                          articleModel.title ?? "",
                           maxLines: 1,
                           style: const TextStyle(
                             color: Color(0xFF6e6e71),

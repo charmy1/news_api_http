@@ -43,14 +43,14 @@ class NewsBloc extends Bloc<NewsEvent, NewsState> {
     });
 
     on<SearchQueryChangedEvent>((event, emit) async {
-      emit(state.copyWith(isSubmitting: true, isSearch: true, isFilter: false, isListing: false));
+      emit(state.copyWith(isSubmitting: true, isSearch: true, isFilter: false, isListing: false,page: 0));
       final result =
       await _newsInterface.searchNewsData(page: state.page, query: state.searchText);
       emit(state.copyWith(isSubmitting: false, newsListFailureOrSuccessOption: optionOf(result)));
     });
 
     on<SourceChangedEvent>((event, emit) {
-      emit(state.copyWith(isSubmitting: true, source: event.source));
+      emit(state.copyWith(isSubmitting: true, source: event.source,page: 0));
     });
 
     on<TextChangedEvent>((event, emit) {
@@ -68,7 +68,7 @@ class NewsBloc extends Bloc<NewsEvent, NewsState> {
     );
     final debounceStream = transitions.where(
           (transition) => transition.event is SearchQueryChangedEvent,
-    ).debounceTime(const Duration(milliseconds: 300));
+    ).debounceTime(const Duration(milliseconds: 150));
 
     return MergeStream([
       nonDebounceStream,
